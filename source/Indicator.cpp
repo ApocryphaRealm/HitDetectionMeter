@@ -28,6 +28,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <cmath>
 #include <format>
 #include <mutex>
@@ -187,6 +188,19 @@ namespace
 			}
 			logger::debug("hit on the player from {} at world bearing {:.0f}, {:.0f} units away, flags {:#x}, cause {:08X}", who, bearing, me.GetDistance(f.from),
 				static_cast<int>(a_event->flags.underlying()), cause ? cause->GetFormID() : 0u);
+			// the numbers behind a marker in the shipped (info) log too, at most once a second, as the Oblivion indicator does
+			static auto s_lastInfo = std::chrono::steady_clock::time_point{};
+			const auto now = std::chrono::steady_clock::now();
+			if (now - s_lastInfo >= std::chrono::seconds(1))
+			{
+				s_lastInfo = now;
+				float yawDeg = 0.0F;
+				if (auto* camera = RE::PlayerCamera::GetSingleton()) { yawDeg = camera->GetRuntimeData2().yaw * 180.0F / kPi; }
+				float rel = std::fmod(bearing - yawDeg, 360.0F);
+				if (rel > 180.0F) { rel -= 360.0F; }
+				if (rel <= -180.0F) { rel += 360.0F; }
+				logger::info("hit from {}: world bearing {:.0f}, camera yaw {:.0f} -> marker at {:.0f} (0 top, 90 right, -90 left), strength {:.2f}", who, bearing, yawDeg, rel, f.strength);
+			}
 			AddFlash(f, who.c_str());
 			return RE::BSEventNotifyControl::kContinue;
 		}

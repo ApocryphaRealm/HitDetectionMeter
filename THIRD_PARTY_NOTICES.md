@@ -6,8 +6,8 @@ GPL-compatible licences; their notices are reproduced as those licences require.
 ## CommonLibSSE-NG 7.2.0 - Skyrim 1.7.x build line
 
 https://github.com/alandtse/CommonLibSSE-NG (commit 7a60f4de794095d7b0f8928d1b930a52e9a7da83), GPL-3.0-or-later WITH
-Modding Exception AND GPL-3.0 Linking Exception (with Corresponding Source); the exceptions ship as
-`CommonLibSSE-NG-EXCEPTIONS.md` beside the 1.7 build.
+Modding Exception AND GPL-3.0 Linking Exception (with Corresponding Source); the exceptions are stated in
+that repository's README and LICENSE at the commit above.
 
 ## CommonLibSSE-NG 3.7.0 - SE 1.5.97 / AE 1.6.1170 build line
 

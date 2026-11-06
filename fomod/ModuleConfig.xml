@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://qconsulting.ca/fo3/ModConfig5.0.xsd">
+	<moduleName>Hit Direction Indicator</moduleName>
+	<requiredInstallFiles>
+		<folder source="Common" destination="" priority="0" />
+	</requiredInstallFiles>
+	<installSteps order="Explicit">
+		<installStep name="Which Skyrim do you have?">
+			<optionalFileGroups order="Explicit">
+				<group name="Game version" type="SelectExactlyOne">
+					<plugins order="Explicit">
+						<plugin name="Skyrim SE 1.5.97 or AE 1.6.1170">
+							<description>For Skyrim Special Edition 1.5.97 and Anniversary Edition 1.6.1170. Built on CommonLibSSE-NG 3.7.0, which reads Address Library formats 1 and 2.</description>
+							<files>
+								<folder source="Line-SE-AE16" destination="" priority="0" />
+							</files>
+							<typeDescriptor>
+								<dependencyType>
+									<defaultType name="Recommended" />
+									<patterns>
+										<pattern>
+											<dependencies operator="And"><gameDependency version="1.7.0.0" /></dependencies>
+											<type name="Optional" />
+										</pattern>
+									</patterns>
+								</dependencyType>
+							</typeDescriptor>
+						</plugin>
+						<plugin name="Skyrim 1.7.99 / 1.7.104 (current Steam version)">
+							<description>For Skyrim 1.7.99 and 1.7.104. Needs SKSE 2.3.x and Address Library All-in-One v13 or newer. Built on CommonLibSSE-NG 7.2.0; this DLL is distributed under GPL-3.0-or-later (licence texts install with it).</description>
+							<files>
+								<folder source="Line-17" destination="" priority="0" />
+							</files>
+							<typeDescriptor>
+								<dependencyType>
+									<defaultType name="Optional" />
+									<patterns>
+										<pattern>
+											<dependencies operator="And"><gameDependency version="1.7.0.0" /></dependencies>
+											<type name="Recommended" />
+										</pattern>
+									</patterns>
+								</dependencyType>
+							</typeDescriptor>
+						</plugin>
+					</plugins>
+				</group>
+			</optionalFileGroups>
+		</installStep>
+	</installSteps>
+</config>

@@ -1,8 +1,8 @@
 {
-    "name": "hitdirectionindicator",
+    "name": "hitdetectionmeter",
     "version-string": "1.0.0",
-    "description": "Hit Direction Indicator - a marker at the edge of the screen shows which way a hit came from",
-    "homepage": "https://github.com/ApocryphaRealm/HitDirectionIndicator",
+    "description": "Hit Detection Meter - a marker at the edge of the screen shows which way a hit came from",
+    "homepage": "https://github.com/ApocryphaRealm/HitDetectionMeter",
     "license": "GPL-3.0-or-later",
     "dependencies": [
         "commonlibsse-ng",

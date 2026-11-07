@@ -1,4 +1,4 @@
-"""Hit Direction Indicator - the Nordic marker art, drawn from scratch with Pillow and numpy (2026-11-06).
+"""Hit Detection Meter - the Nordic marker art, drawn from scratch with Pillow and numpy (2026-11-06).
 
 The owner asked for a hit marker that looks Nordic - carved stone, iron, runic knotwork, muted bone and blood red, the
 dark carved cold look of Norden UI Black, not a modern shooter arrow. This draws ONE texture: a curved slab of dark
@@ -13,7 +13,7 @@ Like Detection Meter's art, the texture's TOP edge faces away from the screen ce
 the ring, turned to the hit's bearing. The slab is bent to a ring of R_RING pixels (in 1080p units, at 2x here), the
 default ring the hit markers sit on (Detection Meter's RadiusX 305 + the default 40 px offset).
 
-Output: dist/SKSE/Plugins/HitDirectionIndicator/HitMarker_Nordic.png (320 x 88, drawn at 160 x 44 on a 1080p screen),
+Output: dist/SKSE/Plugins/HitDetectionMeter/HitMarker_Nordic.png (320 x 88, drawn at 160 x 44 on a 1080p screen),
 and with --preview, two 1920 x 1080 previews in tools/preview/.
 """
 import math
@@ -24,7 +24,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-OUT_DIR = os.path.join(REPO, "dist", "SKSE", "Plugins", "HitDirectionIndicator")
+OUT_DIR = os.path.join(REPO, "dist", "SKSE", "Plugins", "HitDetectionMeter")
 PREVIEW_DIR = os.path.join(REPO, "tools", "preview")
 
 SCALE = 2                 # texture pixels per 1080p pixel

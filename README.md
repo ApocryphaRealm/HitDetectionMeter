@@ -1,4 +1,4 @@
-# Hit Direction Indicator
+# Hit Detection Meter
 
 An SKSE plugin for Skyrim SE 1.5.97, AE 1.6.1170 and 1.7.99 / 1.7.104. When something hits the player, a marker on a ring
 round the screen centre shows which way the hit came from, and fades.
@@ -14,7 +14,7 @@ round the screen centre shows which way the hit came from, and fades.
 * **Detection Meter (Nexus 63057):** when installed, its `Meter_Frame.png` + `Meter_Hostile.png` (whichever art pack
   wins) are drawn, on its own ring from `MaxsuDetectionMeter.ini` moved `fRingOffset` (40 px) out. Otherwise the Nordic
   art from `tools/gen-nordic-art.py`.
-* **Observability:** DevBench tool `hdi.control` - state, `op=hit bearing=<deg> strength=<0..1>`, `op=clear`, `op=reload`.
+* **Observability:** DevBench tool `hdm.control` - state, `op=hit bearing=<deg> strength=<0..1>`, `op=clear`, `op=reload`.
 
 ## Building
 

@@ -1,4 +1,4 @@
-// Hit Direction Indicator - own code, GPL-3.0-or-later. When something hits the player, a marker on a ring round the
+// Hit Detection Meter - own code, GPL-3.0-or-later. When something hits the player, a marker on a ring round the
 // screen centre shows which way the hit came from. See the head of source/Indicator.cpp.
 #include "PCH.h"
 
@@ -22,7 +22,7 @@ namespace
 			DevBenchTool::Init(false);
 			break;
 		case SKSE::MessagingInterface::kDataLoaded:
-			strings::Configure("HitDirectionIndicator");
+			strings::Configure("HitDetectionMeter");
 			detectionmeter::Read();
 			hits::Install();
 			hud::Register();
@@ -42,16 +42,16 @@ namespace
 
 SKSEPluginLoad(const SKSE::LoadInterface* a_skse)
 {
-	SKSE::log::init("HitDirectionIndicator");
+	SKSE::log::init("HitDetectionMeter");
 	// Address Library pre-check, BEFORE SKSE::Init, which opens the Address Library itself: a missing file gets a message
 	// naming it and the plugin loads inert instead of CommonLibSSE-NG's bare failure line.
-	if (!AddressLibraryGuard::Guard("Hit Direction Indicator")) { return true; }
+	if (!AddressLibraryGuard::Guard("Hit Detection Meter")) { return true; }
 	SKSE::Init(a_skse);
 
-	settings::Init("HitDirectionIndicator.ini");
+	settings::Init("HitDetectionMeter.ini");
 	settings::ApplyLogLevel();
-	SKSE::log::describe_level("HitDirectionIndicator.ini");
-	logger::info("Hit Direction Indicator {} loading", SKSE::PluginDeclaration::GetSingleton()->GetVersion().string("."));
+	SKSE::log::describe_level("HitDetectionMeter.ini");
+	logger::info("Hit Detection Meter {} loading", SKSE::PluginDeclaration::GetSingleton()->GetVersion().string("."));
 	logger::info("Build line: {}", RUNTIME_LINE == 17 ? "Skyrim 1.7.x" : "SE 1.5.97 / AE 1.6.x");
 
 	auto* messaging = SKSE::GetMessagingInterface();

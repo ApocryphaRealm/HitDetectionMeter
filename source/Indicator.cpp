@@ -1,4 +1,4 @@
-// Hit Direction Indicator - own code, GPL-3.0-or-later (NOTICE.md).
+// Hit Detection Meter - own code, GPL-3.0-or-later (NOTICE.md).
 //
 // Whenever an enemy hits the player, a marker at the edge of a ring round the screen centre shows which way the hit
 // came from, and fades. The idea and the numbers are ported from our own Oblivion Remastered HUD Position Manager's
@@ -263,6 +263,7 @@ namespace
 	std::atomic<std::uint64_t> g_framesDrawn{ 0 };
 	std::atomic<int>           g_markersLastFrame{ 0 };
 	std::atomic<bool>          g_registered{ false };
+	std::atomic<float>         g_markerW{ 0.0F }, g_markerH{ 0.0F };   // the marker's drawn size before the pop, in screen pixels
 
 	constexpr float kNordicW = 160.0F, kNordicH = 44.0F;   // the Nordic art's size on a 1080p screen (its PNG is drawn at 2x)
 
@@ -373,7 +374,7 @@ namespace
 			{
 				if (!s_nordic.tried)
 				{
-					s_nordic = LoadTex((std::filesystem::current_path() / "Data" / "SKSE" / "Plugins" / "HitDirectionIndicator" / "HitMarker_Nordic.png").string());
+					s_nordic = LoadTex((std::filesystem::current_path() / "Data" / "SKSE" / "Plugins" / "HitDetectionMeter" / "HitMarker_Nordic.png").string());
 				}
 				g_art = s_nordic.id ? kArtNordic : kArtLines;
 				if (!s_nordic.id) { logger::warn("no marker art could be loaded; the hit markers are drawn as plain arcs"); }
@@ -390,14 +391,30 @@ namespace
 		const float cy = io->DisplaySize.y * 0.5F + (dmRing ? s_geo.centerOffsetY : settings::centerOffsetY.load());
 		const float flashScale = s_geo.flashScale, flashShift = s_geo.flashShift;
 		// pictures scale with the screen, as Detection Meter's do (its art is drawn for 1920 x 1080); the ring does not
-		const float sx = io->DisplaySize.x / 1920.0F * settings::size.load();
-		const float sy = io->DisplaySize.y / 1080.0F * settings::size.load();
+		const float resX = io->DisplaySize.x / 1920.0F, resY = io->DisplaySize.y / 1080.0F;
+		const float sx = resX * settings::size.load();
+		const float sy = resY * settings::size.load();
+		// Detection Meter's own marker size, worked out the way its Renderer does it (read from its source, 2026-11-07):
+		// the PNG's pixels times screen width / 1920 and height / 1080, kept as whole pixels (an int), and no INI key scales
+		// it. fSize multiplies that, so 1.0 is exactly Detection Meter's size.
+		auto dmPx = [&](const Texture& a_t) {
+			return ImGuiMCP::ImVec2{ std::floor(a_t.w * resX) * settings::size.load(), std::floor(a_t.h * resY) * settings::size.load() };
+		};
 		const float opacity = std::clamp(settings::opacity.load(), 0.0F, 1.0F);
 		const int r = settings::colorR.load(), g = settings::colorG.load(), b = settings::colorB.load();
 
 		auto* dl = g_api.background();
 		if (!dl) { return; }
 		const int art = g_art.load();
+		const ImGuiMCP::ImVec2 framePx = dmPx(s_frame), fillPx = dmPx(s_fill);
+		const ImGuiMCP::ImVec2 markerPx = art == kArtDetectionMeter ? framePx : art == kArtNordic ? ImGuiMCP::ImVec2{ kNordicW * sx, kNordicH * sy } : ImGuiMCP::ImVec2{ 0.0F, 0.0F };
+		if (markerPx.x != g_markerW.load() || markerPx.y != g_markerH.load())
+		{
+			g_markerW = markerPx.x;
+			g_markerH = markerPx.y;
+			logger::info("hit marker size {:.0f} x {:.0f} px on a {:.0f} x {:.0f} screen ({}; fSize {:.2f})", markerPx.x, markerPx.y, io->DisplaySize.x, io->DisplaySize.y,
+				art == kArtDetectionMeter ? "Detection Meter's frame PNG at its own size" : art == kArtNordic ? "the Nordic art" : "plain arcs", settings::size.load());
+		}
 		int drawn = 0;
 		for (const auto& f : live)
 		{
@@ -414,8 +431,8 @@ namespace
 			const auto col = IM_COL32(r, g, b, static_cast<int>(alpha * 255.0F));
 			if (art == kArtDetectionMeter)
 			{
-				DrawRotated(dl, s_frame.id, px, py, s_frame.w * sx * grow, s_frame.h * sy * grow, rel, col);
-				DrawRotated(dl, s_fill.id, px, py, s_fill.w * sx * grow, s_fill.h * sy * grow, rel, col);
+				DrawRotated(dl, s_frame.id, px, py, framePx.x * grow, framePx.y * grow, rel, col);
+				DrawRotated(dl, s_fill.id, px, py, fillPx.x * grow, fillPx.y * grow, rel, col);
 			}
 			else if (art == kArtNordic)
 			{
@@ -559,8 +576,8 @@ namespace hud
 		}
 		const int art = g_art.load();
 		return std::format(
-			R"({{"registered":{},"art":"{}","framesDrawn":{},"markersLastFrame":{},"menuHidden":{},"hiddenWhy":"{}","detectionMeter":{{"artFound":{},"iniFound":{},"radiusX":{:.1f},"radiusY":{:.1f},"centerOffsetX":{:.1f},"centerOffsetY":{:.1f},"flashScale":{:.2f},"flashShift":{:.1f}}},"settings":{{"enabled":{},"showFriendlyHits":{},"duration":{:.2f},"size":{:.2f},"opacity":{:.2f},"color":[{},{},{}],"maxMarkers":{},"ringOffset":{:.0f},"radius":{:.0f},"centerOffsetX":{:.0f},"centerOffsetY":{:.0f}}}}})",
-			g_registered.load(), art == kArtDetectionMeter ? "detection-meter" : art == kArtNordic ? "nordic" : art == kArtLines ? "lines" : "not chosen yet", g_framesDrawn.load(),
+			R"({{"registered":{},"art":"{}","markerSizePx":[{:.0f},{:.0f}],"framesDrawn":{},"markersLastFrame":{},"menuHidden":{},"hiddenWhy":"{}","detectionMeter":{{"artFound":{},"iniFound":{},"radiusX":{:.1f},"radiusY":{:.1f},"centerOffsetX":{:.1f},"centerOffsetY":{:.1f},"flashScale":{:.2f},"flashShift":{:.1f}}},"settings":{{"enabled":{},"showFriendlyHits":{},"duration":{:.2f},"size":{:.2f},"opacity":{:.2f},"color":[{},{},{}],"maxMarkers":{},"ringOffset":{:.0f},"radius":{:.0f},"centerOffsetX":{:.0f},"centerOffsetY":{:.0f}}}}})",
+			g_registered.load(), art == kArtDetectionMeter ? "detection-meter" : art == kArtNordic ? "nordic" : art == kArtLines ? "lines" : "not chosen yet", g_markerW.load(), g_markerH.load(), g_framesDrawn.load(),
 			g_markersLastFrame.load(), g_menuHidden.load(), why, geo.artFound, geo.iniFound, geo.radiusX, geo.radiusY, geo.centerOffsetX, geo.centerOffsetY, geo.flashScale,
 			geo.flashShift, settings::enabled.load(), settings::showFriendlyHits.load(), settings::duration.load(), settings::size.load(), settings::opacity.load(),
 			settings::colorR.load(), settings::colorG.load(), settings::colorB.load(), settings::maxMarkers.load(), settings::ringOffset.load(), settings::radius.load(),

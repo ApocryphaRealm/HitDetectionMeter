@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fomod>
+  <Name>Hit Detection Meter</Name>
+  <Author>ApocryphaRealm</Author>
+  <Version>1.0.0</Version>
+  <Website>https://github.com/ApocryphaRealm/HitDetectionMeter</Website>
+  <Description>
+    When something hits you, a marker on a ring round the middle of the screen shows which way the hit came from.
+    With Detection Meter installed the markers wear its art, at its size, on a ring just outside its own.
+    Requires SKSE, Address Library and the Apocrypha Menu Framework (or SKSE Menu Framework).
+  </Description>
+  <Groups>
+    <element>User Interface</element>
+    <element>Combat</element>
+  </Groups>
+</fomod>

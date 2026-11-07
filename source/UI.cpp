@@ -71,7 +71,7 @@ namespace UI
 		void HelpMarker(const char* a_description)
 		{
 			ImGuiMCP::SameLine();
-			ImGuiMCP::TextDisabled("%s", strings::TR("HDI_HelpMark", "(?)"));
+			ImGuiMCP::TextDisabled("%s", strings::TR("HDM_HelpMark", "(?)"));
 			if (ImGuiMCP::IsItemHovered()) { ImGuiMCP::SetTooltip("%s", a_description); }
 		}
 
@@ -101,34 +101,34 @@ namespace UI
 		{
 			ImGuiMCP::SeparatorText("");
 
-			if (ImGuiMCP::Button(strings::TR("HDI_SaveBtn", "Save")))
+			if (ImGuiMCP::Button(strings::TR("HDM_SaveBtn", "Save")))
 			{
-				statusMessage = strings::TR("HDI_StatusSaving", "Saving...");
+				statusMessage = strings::TR("HDM_StatusSaving", "Saving...");
 				OnMainThread([]() {
-					statusMessage = settings::Save() ? strings::TR("HDI_StatusSaved", "Settings saved.") : strings::TR("HDI_StatusSaveFail", "Could not write the INI. See the log for why.");
+					statusMessage = settings::Save() ? strings::TR("HDM_StatusSaved", "Settings saved.") : strings::TR("HDM_StatusSaveFail", "Could not write the INI. See the log for why.");
 				});
 			}
-			HelpMarker(strings::TR("HDI_HelpSave", "Writes this page to the mod's INI so it survives a restart."));
+			HelpMarker(strings::TR("HDM_HelpSave", "Writes this page to the mod's INI so it survives a restart."));
 
 			ImGuiMCP::SameLine();
-			if (ImGuiMCP::Button(strings::TR("HDI_ReloadBtn", "Reload from INI")))
+			if (ImGuiMCP::Button(strings::TR("HDM_ReloadBtn", "Reload from INI")))
 			{
-				statusMessage = strings::TR("HDI_StatusReloading", "Reloading...");
+				statusMessage = strings::TR("HDM_StatusReloading", "Reloading...");
 				OnMainThread([]() {
 					const bool ok = settings::Reload();
 					detectionmeter::Reread();
-					statusMessage = ok ? strings::TR("HDI_StatusReloaded", "Settings reloaded from the INI.") : strings::TR("HDI_StatusReloadFail", "Could not read the INI. See the log for why.");
+					statusMessage = ok ? strings::TR("HDM_StatusReloaded", "Settings reloaded from the INI.") : strings::TR("HDM_StatusReloadFail", "Could not read the INI. See the log for why.");
 				});
 			}
-			HelpMarker(strings::TR("HDI_HelpReload", "Throws away changes made here since the last save, reads the INI again, and reads Detection Meter's settings and art again."));
+			HelpMarker(strings::TR("HDM_HelpReload", "Throws away changes made here since the last save, reads the INI again, and reads Detection Meter's settings and art again."));
 
 			ImGuiMCP::SameLine();
-			if (ImGuiMCP::Button(strings::TR("HDI_RestoreBtn", "Restore defaults")))
+			if (ImGuiMCP::Button(strings::TR("HDM_RestoreBtn", "Restore defaults")))
 			{
 				settings::RestoreDefaults();
-				statusMessage = strings::TR("HDI_StatusRestored", "Defaults restored. Press Save to keep them.");
+				statusMessage = strings::TR("HDM_StatusRestored", "Defaults restored. Press Save to keep them.");
 			}
-			HelpMarker(strings::TR("HDI_HelpRestore", "Puts this page back to its fresh-install values. Nothing is written until you press Save."));
+			HelpMarker(strings::TR("HDM_HelpRestore", "Puts this page back to its fresh-install values. Nothing is written until you press Save."));
 
 			if (!statusMessage.empty()) { ImGuiMCP::TextWrapped("%s", statusMessage.c_str()); }
 			ImGuiMCP::Spacing();
@@ -148,7 +148,7 @@ namespace UI
 			logger::warn("The installed menu framework is older than this page needs. Settings are read from the INI only.");
 			return;
 		}
-		SKSEMenuFramework::SetSection("Hit Direction Indicator");
+		SKSEMenuFramework::SetSection("Hit Detection Meter");
 		SKSEMenuFramework::AddSectionItem("Settings", SettingsPanel::Render);
 		logger::info("Registered the settings page with the menu framework");
 	}
@@ -157,49 +157,49 @@ namespace UI
 	{
 		strings::Tick();
 
-		ImGuiMCP::TextWrapped("%s", strings::TR("HDI_Intro", "When something hits you, a marker on a ring round the middle of the screen shows which way the hit came from. Changes apply at once; press Save to keep them."));
+		ImGuiMCP::TextWrapped("%s", strings::TR("HDM_Intro", "When something hits you, a marker on a ring round the middle of the screen shows which way the hit came from. Changes apply at once; press Save to keep them."));
 		ImGuiMCP::Spacing();
 
 		const auto geo = detectionmeter::Get();
 		if (geo.artFound)
 		{
-			ImGuiMCP::TextWrapped("%s", strings::TR("HDI_StyleDM", "Detection Meter is installed: the markers wear its art, whichever pack you chose for it, on a ring just outside its own."));
+			ImGuiMCP::TextWrapped("%s", strings::TR("HDM_StyleDM", "Detection Meter is installed: the markers wear its art, whichever pack you chose for it, on a ring just outside its own."));
 		}
 		else
 		{
-			ImGuiMCP::TextWrapped("%s", strings::TR("HDI_StyleNordic", "Detection Meter is not installed: the markers use this mod's own Nordic art."));
+			ImGuiMCP::TextWrapped("%s", strings::TR("HDM_StyleNordic", "Detection Meter is not installed: the markers use this mod's own Nordic art."));
 		}
 		ImGuiMCP::Spacing();
 
 		ImGuiMCP::PushItemWidth(260.0F);
 
-		ImGuiMCP::SeparatorText(strings::TR("HDI_General", "Markers"));
-		ToggleRow(strings::TR("HDI_Enable", "Show hit markers"), settings::enabled, strings::TR("HDI_HelpEnable", "Off: no marker is drawn."));
-		ToggleRow(strings::TR("HDI_Friendly", "Show hits from friends"), settings::showFriendlyHits,
-			strings::TR("HDI_HelpFriendly", "Off: hits from followers and from anyone not hostile to you draw no marker."));
-		FloatRow(strings::TR("HDI_Duration", "Fade time"), settings::duration, 0.2F, 5.0F, "%.1f s", strings::TR("HDI_HelpDuration", "Seconds a marker takes to fade out after the hit."));
-		FloatRow(strings::TR("HDI_Size", "Size"), settings::size, 0.25F, 3.0F, "%.2f", strings::TR("HDI_HelpSize", "A multiple of the art's own size. 1 matches Detection Meter's markers."));
-		FloatRow(strings::TR("HDI_Opacity", "Opacity"), settings::opacity, 0.0F, 1.0F, "%.2f",
-			strings::TR("HDI_HelpOpacity", "How solid the strongest hit's marker is. Power attacks draw at this; ordinary hits at seven tenths of it; blocked hits fainter."));
-		IntRow(strings::TR("HDI_ColorR", "Tint red"), settings::colorR, 0, 255, strings::TR("HDI_HelpColor", "The marker's tint. White (255, 255, 255) draws the art as it is."));
-		IntRow(strings::TR("HDI_ColorG", "Tint green"), settings::colorG, 0, 255, strings::TR("HDI_HelpColor", "The marker's tint. White (255, 255, 255) draws the art as it is."));
-		IntRow(strings::TR("HDI_ColorB", "Tint blue"), settings::colorB, 0, 255, strings::TR("HDI_HelpColor", "The marker's tint. White (255, 255, 255) draws the art as it is."));
-		IntRow(strings::TR("HDI_MaxMarkers", "Markers at once"), settings::maxMarkers, 1, 16, strings::TR("HDI_HelpMaxMarkers", "Each attacker has one marker; past this many, the oldest goes."));
+		ImGuiMCP::SeparatorText(strings::TR("HDM_General", "Markers"));
+		ToggleRow(strings::TR("HDM_Enable", "Show hit markers"), settings::enabled, strings::TR("HDM_HelpEnable", "Off: no marker is drawn."));
+		ToggleRow(strings::TR("HDM_Friendly", "Show hits from friends"), settings::showFriendlyHits,
+			strings::TR("HDM_HelpFriendly", "Off: hits from followers and from anyone not hostile to you draw no marker."));
+		FloatRow(strings::TR("HDM_Duration", "Fade time"), settings::duration, 0.2F, 5.0F, "%.1f s", strings::TR("HDM_HelpDuration", "Seconds a marker takes to fade out after the hit."));
+		FloatRow(strings::TR("HDM_Size", "Size"), settings::size, 0.25F, 3.0F, "%.2f", strings::TR("HDM_HelpSize", "A multiple of the art's own size. 1 matches Detection Meter's markers."));
+		FloatRow(strings::TR("HDM_Opacity", "Opacity"), settings::opacity, 0.0F, 1.0F, "%.2f",
+			strings::TR("HDM_HelpOpacity", "How solid the strongest hit's marker is. Power attacks draw at this; ordinary hits at seven tenths of it; blocked hits fainter."));
+		IntRow(strings::TR("HDM_ColorR", "Tint red"), settings::colorR, 0, 255, strings::TR("HDM_HelpColor", "The marker's tint. White (255, 255, 255) draws the art as it is."));
+		IntRow(strings::TR("HDM_ColorG", "Tint green"), settings::colorG, 0, 255, strings::TR("HDM_HelpColor", "The marker's tint. White (255, 255, 255) draws the art as it is."));
+		IntRow(strings::TR("HDM_ColorB", "Tint blue"), settings::colorB, 0, 255, strings::TR("HDM_HelpColor", "The marker's tint. White (255, 255, 255) draws the art as it is."));
+		IntRow(strings::TR("HDM_MaxMarkers", "Markers at once"), settings::maxMarkers, 1, 16, strings::TR("HDM_HelpMaxMarkers", "Each attacker has one marker; past this many, the oldest goes."));
 
-		ImGuiMCP::SeparatorText(strings::TR("HDI_Ring", "Ring"));
-		FloatRow(strings::TR("HDI_RingOffset", "Distance outside Detection Meter"), settings::ringOffset, -100.0F, 300.0F, "%.0f px",
-			strings::TR("HDI_HelpRingOffset", "How far outside Detection Meter's ring the hit markers sit, so a hit taken while sneaking sits beside a detection marker, not on top of it."));
+		ImGuiMCP::SeparatorText(strings::TR("HDM_Ring", "Ring"));
+		FloatRow(strings::TR("HDM_RingOffset", "Distance outside Detection Meter"), settings::ringOffset, -100.0F, 300.0F, "%.0f px",
+			strings::TR("HDM_HelpRingOffset", "How far outside Detection Meter's ring the hit markers sit, so a hit taken while sneaking sits beside a detection marker, not on top of it."));
 		if (geo.iniFound)
 		{
-			ImGuiMCP::TextDisabled("%s", strings::TR("HDI_RingFromDM", "The ring's size and centre come from Detection Meter's own settings."));
+			ImGuiMCP::TextDisabled("%s", strings::TR("HDM_RingFromDM", "The ring's size and centre come from Detection Meter's own settings."));
 		}
 		else
 		{
-			FloatRow(strings::TR("HDI_Radius", "Ring radius"), settings::radius, 0.0F, 1000.0F, "%.0f px", strings::TR("HDI_HelpRadius", "Used only without Detection Meter."));
-			FloatRow(strings::TR("HDI_CenterX", "Ring centre, across"), settings::centerOffsetX, -500.0F, 500.0F, "%.0f px",
-				strings::TR("HDI_HelpCenter", "Moves the ring's centre from the middle of the screen. Used only without Detection Meter."));
-			FloatRow(strings::TR("HDI_CenterY", "Ring centre, down"), settings::centerOffsetY, -500.0F, 500.0F, "%.0f px",
-				strings::TR("HDI_HelpCenter", "Moves the ring's centre from the middle of the screen. Used only without Detection Meter."));
+			FloatRow(strings::TR("HDM_Radius", "Ring radius"), settings::radius, 0.0F, 1000.0F, "%.0f px", strings::TR("HDM_HelpRadius", "Used only without Detection Meter."));
+			FloatRow(strings::TR("HDM_CenterX", "Ring centre, across"), settings::centerOffsetX, -500.0F, 500.0F, "%.0f px",
+				strings::TR("HDM_HelpCenter", "Moves the ring's centre from the middle of the screen. Used only without Detection Meter."));
+			FloatRow(strings::TR("HDM_CenterY", "Ring centre, down"), settings::centerOffsetY, -500.0F, 500.0F, "%.0f px",
+				strings::TR("HDM_HelpCenter", "Moves the ring's centre from the middle of the screen. Used only without Detection Meter."));
 		}
 
 		ImGuiMCP::PopItemWidth();

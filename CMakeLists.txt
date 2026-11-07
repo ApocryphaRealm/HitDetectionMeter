@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 project(
-	HitDirectionIndicator
+	HitDetectionMeter
 	VERSION 1.0.0
 	LANGUAGES CXX
 )

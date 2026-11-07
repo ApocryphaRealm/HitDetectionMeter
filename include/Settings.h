@@ -1,6 +1,6 @@
 #pragma once
 
-// Hit Direction Indicator - settings. Plain-file INI (never the Win32 profile API, which MO2's VFS does not redirect).
+// Hit Detection Meter - settings. Plain-file INI (never the Win32 profile API, which MO2's VFS does not redirect).
 // Every compiled default here is the value the shipped INI carries (rule 16); RestoreDefaults() puts these back.
 
 #include <atomic>

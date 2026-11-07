@@ -107,14 +107,14 @@ namespace DevBenchTool
 		DevBenchAPI::IDevBenchInterface001* devBench = DevBenchAPI::GetDevBenchInterface001();
 		if (!devBench)
 		{
-			if (a_lastAttempt) { logger::info("DevBench not detected; skipping the \"hdi.control\" tool"); }
+			if (a_lastAttempt) { logger::info("DevBench not detected; skipping the \"hdm.control\" tool"); }
 			else { logger::debug("DevBench not detected yet; will retry at the next message"); }
 			return;
 		}
 
 		constexpr const char* descriptor =
 			"{"
-			"\"description\":\"Hit Direction Indicator live state and driver. No op: the HUD element (registered, art in use, frames drawn, markers drawn last frame, "
+			"\"description\":\"Hit Detection Meter live state and driver. No op: the HUD element (registered, art in use, frames drawn, markers drawn last frame, "
 			"what hides it), Detection Meter's art and ring as read, the settings, hit counters (seen, shown, ignored and why), the markers up and the last hit. "
 			"op=hit bearing=<degrees, 0 ahead, 90 right, 180 behind, -90 left> strength=<0..1>: draws a marker as a real hit from that side would. "
 			"op=clear removes every marker. op=reload re-reads the INI and Detection Meter's files.\","
@@ -122,9 +122,9 @@ namespace DevBenchTool
 			"\"readOnly\":false"
 			"}";
 
-		if (devBench->RegisterTool("hdi.control", descriptor, &ControlTool, nullptr))
+		if (devBench->RegisterTool("hdm.control", descriptor, &ControlTool, nullptr))
 		{
-			logger::info("Registered \"hdi.control\" with DevBench (build {})", devBench->GetBuildNumber());
+			logger::info("Registered \"hdm.control\" with DevBench (build {})", devBench->GetBuildNumber());
 			registered = true;
 		}
 	}

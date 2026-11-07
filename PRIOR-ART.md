@@ -1,4 +1,4 @@
-# Prior art for Hit Direction Indicator (searched 2026-11-06, rule 24)
+# Prior art for Hit Detection Meter (searched 2026-11-06, rule 24)
 
 Wanted: when an enemy hits the player, a mark at the screen edge shows which way the hit came from, on SE 1.5.97, AE and 1.7.
 

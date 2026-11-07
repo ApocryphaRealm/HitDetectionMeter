@@ -1,4 +1,4 @@
-// Hit Direction Indicator - reading Detection Meter's own files, so the hit markers wear the detection markers' art
+// Hit Detection Meter - reading Detection Meter's own files, so the hit markers wear the detection markers' art
 // (whichever art pack wins in the load order: the stock pictures, SkyALERT Redesign, SkyALERT Vanilla Presets...) and sit
 // on a ring just outside theirs. The owner, 2026-11-06: "use whatever they have selected for detection meter", and
 // "slightly offset because you could still get a damage indicator while sneaking".

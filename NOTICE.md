@@ -1,4 +1,4 @@
-# Hit Direction Indicator - copyright and licence
+# Hit Detection Meter - copyright and licence
 
 Copyright (C) 2026 ApocryphaRealm
 

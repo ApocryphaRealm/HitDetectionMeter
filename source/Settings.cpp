@@ -182,7 +182,7 @@ namespace settings
 		colorG = 255;
 		colorB = 255;
 		maxMarkers = 8;
-		ringOffset = 40.0F;
+		ringOffset = -40.0F;
 		radius = 305.0F;
 		centerOffsetX = 0.0F;
 		centerOffsetY = -48.0F;

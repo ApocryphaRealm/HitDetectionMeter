@@ -21,7 +21,7 @@ namespace settings
 	inline std::atomic<int> maxMarkers{ 8 };            // iMaxMarkers - markers on screen at once; the oldest goes first
 
 	// [Ring] - the ring the markers sit on
-	inline std::atomic<float> ringOffset{ 40.0F };      // fRingOffset - pixels outside Detection Meter's ring (or the ring below)
+	inline std::atomic<float> ringOffset{ -40.0F };     // fRingOffset - pixels from Detection Meter's ring (or the ring below); negative = closer to the character
 	inline std::atomic<float> radius{ 305.0F };         // fRadius - the ring's radius, used only when Detection Meter is not installed
 	inline std::atomic<float> centerOffsetX{ 0.0F };    // fCenterOffsetX / fCenterOffsetY - the ring's centre from the screen centre,
 	inline std::atomic<float> centerOffsetY{ -48.0F };  //   used only when Detection Meter is not installed (its own defaults)

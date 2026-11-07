@@ -120,6 +120,16 @@ namespace
 		logger::debug("hit marker: {} {} (strength {:.2f}); {} marker(s) up", refreshed ? "refreshed for" : "added for", a_who, a_new.strength, n);
 	}
 
+	struct YawSources
+	{
+		float niCamera = NAN;      // the world camera's view direction (the one used)
+		float thirdPerson = NAN;   // player heading + ThirdPersonState free rotation (only while free rotation is on)
+		float runtimeData2 = NAN;  // PlayerCamera RUNTIME_DATA2 yaw, the old source
+		float body = NAN;          // the player's heading
+	};
+	YawSources ReadYaws(RE::PlayerCharacter* a_player);
+	float CameraYawDeg(RE::PlayerCharacter* a_player);
+
 	class HitSink final : public RE::BSTEventSink<RE::TESHitEvent>
 	{
 	public:
@@ -188,14 +198,19 @@ namespace
 			}
 			logger::debug("hit on the player from {} at world bearing {:.0f}, {:.0f} units away, flags {:#x}, cause {:08X}", who, bearing, me.GetDistance(f.from),
 				static_cast<int>(a_event->flags.underlying()), cause ? cause->GetFormID() : 0u);
+			{
+				// every yaw source, so a run shows which one moves when the camera turns (NaN = not available now)
+				const auto y = ReadYaws(player);
+				logger::debug("camera yaw sources: NiCamera {:.1f} (used), third-person heading+freeRotation {:.1f}, PlayerCamera RUNTIME_DATA2 {:.1f}, body {:.1f}",
+					y.niCamera, y.thirdPerson, y.runtimeData2, y.body);
+			}
 			// the numbers behind a marker in the shipped (info) log too, at most once a second, as the Oblivion indicator does
 			static auto s_lastInfo = std::chrono::steady_clock::time_point{};
 			const auto now = std::chrono::steady_clock::now();
 			if (now - s_lastInfo >= std::chrono::seconds(1))
 			{
 				s_lastInfo = now;
-				float yawDeg = 0.0F;
-				if (auto* camera = RE::PlayerCamera::GetSingleton()) { yawDeg = camera->GetRuntimeData2().yaw * 180.0F / kPi; }
+				const float yawDeg = CameraYawDeg(player);
 				float rel = std::fmod(bearing - yawDeg, 360.0F);
 				if (rel > 180.0F) { rel -= 360.0F; }
 				if (rel <= -180.0F) { rel += 360.0F; }
@@ -305,11 +320,43 @@ namespace
 		return r;
 	}
 
+	// The ways the camera's yaw can be read, in degrees (0 = north, +Y; clockwise, as GetAngleZ and the hit bearing).
+	// PlayerCamera's RUNTIME_DATA2 'yaw' (0x154) is marked "?" in CommonLibSSE-NG and logged "186" on every hit on
+	// 2026-11-07 even after the camera was turned 90 degrees, so it is no longer used. The camera's world direction is
+	// read from the rendered NiCamera instead: a Gamebryo camera looks down its local +X axis, so its view direction is
+	// the first column of its world rotation - which is what the screen shows, in first and third person alike.
+	YawSources ReadYaws(RE::PlayerCharacter* a_player)
+	{
+		YawSources y;
+		constexpr float k = 180.0F / kPi;
+		if (auto* cam = RE::Main::WorldRootCamera())
+		{
+			const auto& m = cam->world.rotate;
+			const float fx = m.entry[0][0], fy = m.entry[1][0];
+			if (fx * fx + fy * fy > 1e-6F) { y.niCamera = std::atan2(fx, fy) * k; }
+		}
+		if (a_player) { y.body = a_player->GetAngleZ() * k; }
+		if (auto* camera = RE::PlayerCamera::GetSingleton())
+		{
+			y.runtimeData2 = camera->GetRuntimeData2().yaw * k;
+			if (camera->IsInThirdPerson() && a_player)
+			{
+				if (auto* tps = static_cast<RE::ThirdPersonState*>(camera->currentState.get()))
+				{
+					y.thirdPerson = (a_player->GetAngleZ() + (tps->freeRotationEnabled ? tps->freeRotation.x : 0.0F)) * k;
+				}
+			}
+		}
+		return y;
+	}
+
 	// The camera's yaw in degrees (Dragon's Eye Minimap's PlayerHeading: the way the camera looks, not the body).
 	float CameraYawDeg(RE::PlayerCharacter* a_player)
 	{
-		if (auto* camera = RE::PlayerCamera::GetSingleton()) { return camera->GetRuntimeData2().yaw * 180.0F / kPi; }
-		return a_player ? a_player->GetAngleZ() * 180.0F / kPi : 0.0F;
+		const auto y = ReadYaws(a_player);
+		if (!std::isnan(y.niCamera)) { return y.niCamera; }
+		if (!std::isnan(y.thirdPerson)) { return y.thirdPerson; }
+		return std::isnan(y.body) ? 0.0F : y.body;
 	}
 
 	void __stdcall Draw()

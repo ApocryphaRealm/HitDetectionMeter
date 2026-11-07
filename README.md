@@ -12,7 +12,7 @@ round the screen centre shows which way the hit came from, and fades.
   our Oblivion Remastered HUD Position Manager's damage direction indicator.
 * **Drawing:** an Apocrypha Menu Framework HUD element (render thread, no game locks), `ImDrawList_AddImageQuad`.
 * **Detection Meter (Nexus 63057):** when installed, its `Meter_Frame.png` + `Meter_Hostile.png` (whichever art pack
-  wins) are drawn, on its own ring from `MaxsuDetectionMeter.ini` moved `fRingOffset` (40 px) out. Otherwise the Nordic
+  wins) are drawn, on its own ring from `MaxsuDetectionMeter.ini` moved by `fRingOffset` (-40 px: 40 px in, closer to the character). Otherwise the Nordic
   art from `tools/gen-nordic-art.py`.
 * **Observability:** DevBench tool `hdm.control` - state, `op=hit bearing=<deg> strength=<0..1>`, `op=clear`, `op=reload`.
 

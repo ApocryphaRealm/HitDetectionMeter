@@ -187,8 +187,8 @@ namespace UI
 		IntRow(strings::TR("HDM_MaxMarkers", "Markers at once"), settings::maxMarkers, 1, 16, strings::TR("HDM_HelpMaxMarkers", "Each attacker has one marker; past this many, the oldest goes."));
 
 		ImGuiMCP::SeparatorText(strings::TR("HDM_Ring", "Ring"));
-		FloatRow(strings::TR("HDM_RingOffset", "Distance outside Detection Meter"), settings::ringOffset, -100.0F, 300.0F, "%.0f px",
-			strings::TR("HDM_HelpRingOffset", "How far outside Detection Meter's ring the hit markers sit, so a hit taken while sneaking sits beside a detection marker, not on top of it."));
+		FloatRow(strings::TR("HDM_RingOffset", "Distance from Detection Meter's ring (negative = closer to the character)"), settings::ringOffset, -300.0F, 300.0F, "%.0f px",
+			strings::TR("HDM_HelpRingOffset", "How far the hit markers sit from Detection Meter's ring. Negative puts them inside it, closer to your character; positive puts them outside. Either way a hit taken while sneaking sits beside a detection marker, not on top of it."));
 		if (geo.iniFound)
 		{
 			ImGuiMCP::TextDisabled("%s", strings::TR("HDM_RingFromDM", "The ring's size and centre come from Detection Meter's own settings."));

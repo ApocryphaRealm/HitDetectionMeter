@@ -6,7 +6,7 @@
   <Website>https://github.com/ApocryphaRealm/HitDetectionMeter</Website>
   <Description>
     When something hits you, a marker on a ring round the middle of the screen shows which way the hit came from.
-    With Detection Meter installed the markers wear its art, at its size, on a ring just outside its own.
+    With Detection Meter installed the markers wear its art, at its size, on a ring just inside its own, closer to the character.
     Requires SKSE, Address Library and the Apocrypha Menu Framework (or SKSE Menu Framework).
   </Description>
   <Groups>

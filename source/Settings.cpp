@@ -2,7 +2,9 @@
 
 #include "Settings.h"
 
+#include "utils/INISettingCollection.h"
 #include "utils/Logger.h"
+#include "utils/Setting.h"
 
 #include <algorithm>
 #include <cctype>
@@ -122,11 +124,45 @@ namespace settings
 		}
 
 		std::string F(float a_v) { return std::format("{:.2f}", a_v); }
+
+		// MakeSetting infers the type from the name's prefix (b, i, u, f); a value of another type comes back with a
+		// null name, and the collection would dereference that name. Refuse it here, where the log can say which one.
+		void AddChecked(utils::INISettingCollection* a_collection, RE::Setting* a_setting, const char* a_name)
+		{
+			if (a_setting && a_setting->GetName())
+			{
+				a_collection->AddSettings(a_setting);
+				return;
+			}
+			logger::critical("Setting \"{}\" was built with a value that does not match the type its name prefix promises, so it has been skipped",
+				a_name);
+		}
 	}
 
 	void Init(const char* a_iniFileName)
 	{
 		iniPath = (std::filesystem::current_path() / "Data" / "SKSE" / "Plugins" / a_iniFileName).string();
+
+		// Every key is registered with the project's INISettingCollection, holding its compiled default (the shipped
+		// INI's value, rule 16), but never READ through it: the collection reads with the Win32 profile API, which MO2's
+		// VFS does not reliably redirect (rule 16). The values of record come from the plain-file read below.
+		auto* collection = utils::INISettingCollection::GetSingleton();
+		const auto add = [collection](const char* a_name, auto a_value) { AddChecked(collection, utils::MakeSetting(a_name, a_value), a_name); };
+		add("bEnabled:General", enabled.load());
+		add("bShowFriendlyHits:General", showFriendlyHits.load());
+		add("fDuration:General", duration.load());
+		add("fSize:General", size.load());
+		add("fOpacity:General", opacity.load());
+		add("iColorR:General", colorR.load());
+		add("iColorG:General", colorG.load());
+		add("iColorB:General", colorB.load());
+		add("iMaxMarkers:General", maxMarkers.load());
+		add("fRingOffset:Ring", ringOffset.load());
+		add("fRadius:Ring", radius.load());
+		add("fCenterOffsetX:Ring", centerOffsetX.load());
+		add("fCenterOffsetY:Ring", centerOffsetY.load());
+		add("uLogLevel:Debug", static_cast<unsigned int>(logLevel.load()));
+
 		LoadFileValues();
 	}
 

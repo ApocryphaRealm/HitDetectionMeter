@@ -120,15 +120,21 @@ namespace
 		logger::debug("hit marker: {} {} (strength {:.2f}); {} marker(s) up", refreshed ? "refreshed for" : "added for", a_who, a_new.strength, n);
 	}
 
+	// Every place the camera's yaw can be read, in degrees, so a run shows which one follows the rendered view (NaN = not
+	// available now). 0 = north (+Y), clockwise, as GetAngleZ and the hit bearing.
 	struct YawSources
 	{
-		float niCamera = NAN;      // the world camera's view direction (the one used)
-		float thirdPerson = NAN;   // player heading + ThirdPersonState free rotation (only while free rotation is on)
-		float runtimeData2 = NAN;  // PlayerCamera RUNTIME_DATA2 yaw, the old source
+		float niCamera = NAN;      // Main::WorldRootCamera() world rotation, column 0 (a Gamebryo camera looks down local +X) - the one used
+		float w2c[3] = { NAN, NAN, NAN };   // that camera's worldToCam matrix (what HUD projection uses), rows 0..2 read as directions
+		float root0 = NAN, root1 = NAN;     // PlayerCamera::cameraRoot world rotation, columns 0 and 1
+		float thirdPerson = NAN;   // player heading + ThirdPersonState freeRotation.x (only while free rotation is on)
+		float tpsCurrentYaw = NAN, tpsTargetYaw = NAN, tpsFreeX = NAN;   // ThirdPersonState's own fields, raw
+		float runtimeData2 = NAN;  // PlayerCamera RUNTIME_DATA2 yaw
 		float body = NAN;          // the player's heading
 	};
 	YawSources ReadYaws(RE::PlayerCharacter* a_player);
 	float CameraYawDeg(RE::PlayerCharacter* a_player);
+	std::string YawText(const YawSources& a_y);
 
 	class HitSink final : public RE::BSTEventSink<RE::TESHitEvent>
 	{
@@ -201,8 +207,7 @@ namespace
 			{
 				// every yaw source, so a run shows which one moves when the camera turns (NaN = not available now)
 				const auto y = ReadYaws(player);
-				logger::debug("camera yaw sources: NiCamera {:.1f} (used), third-person heading+freeRotation {:.1f}, PlayerCamera RUNTIME_DATA2 {:.1f}, body {:.1f}",
-					y.niCamera, y.thirdPerson, y.runtimeData2, y.body);
+				logger::debug("camera yaw sources at hit: {}", YawText(y));
 			}
 			// the numbers behind a marker in the shipped (info) log too, at most once a second, as the Oblivion indicator does
 			static auto s_lastInfo = std::chrono::steady_clock::time_point{};
@@ -320,34 +325,76 @@ namespace
 		return r;
 	}
 
-	// The ways the camera's yaw can be read, in degrees (0 = north, +Y; clockwise, as GetAngleZ and the hit bearing).
-	// PlayerCamera's RUNTIME_DATA2 'yaw' (0x154) is marked "?" in CommonLibSSE-NG and logged "186" on every hit on
-	// 2026-11-07 even after the camera was turned 90 degrees, so it is no longer used. The camera's world direction is
-	// read from the rendered NiCamera instead: a Gamebryo camera looks down its local +X axis, so its view direction is
-	// the first column of its world rotation - which is what the screen shows, in first and third person alike.
+	// The ways the camera's yaw can be read. 2026-11-07 18:55 run (True Directional Movement + SmoothCam): NiCamera,
+	// RUNTIME_DATA2 and heading+freeRotation all agreed (186.1) and none moved across a reported 60-90 degree camera turn,
+	// so every further candidate is read too, and Draw logs whenever any of them moves (TraceYaws) - the run shows which
+	// one follows the view. Compass Navigation Overhaul and Dragon's Eye Minimap read RUNTIME_DATA2 yaw for their compasses.
 	YawSources ReadYaws(RE::PlayerCharacter* a_player)
 	{
 		YawSources y;
 		constexpr float k = 180.0F / kPi;
+		auto dirYaw = [](float a_x, float a_y) { return a_x * a_x + a_y * a_y > 1e-6F ? std::atan2(a_x, a_y) * k : NAN; };
 		if (auto* cam = RE::Main::WorldRootCamera())
 		{
 			const auto& m = cam->world.rotate;
-			const float fx = m.entry[0][0], fy = m.entry[1][0];
-			if (fx * fx + fy * fy > 1e-6F) { y.niCamera = std::atan2(fx, fy) * k; }
+			y.niCamera = dirYaw(m.entry[0][0], m.entry[1][0]);
+			const auto& w = cam->GetRuntimeData().worldToCam;
+			for (int r = 0; r < 3; ++r) { y.w2c[r] = dirYaw(w[r][0], w[r][1]); }
 		}
 		if (a_player) { y.body = a_player->GetAngleZ() * k; }
 		if (auto* camera = RE::PlayerCamera::GetSingleton())
 		{
 			y.runtimeData2 = camera->GetRuntimeData2().yaw * k;
+			if (auto* root = camera->cameraRoot.get())
+			{
+				const auto& m = root->world.rotate;
+				y.root0 = dirYaw(m.entry[0][0], m.entry[1][0]);
+				y.root1 = dirYaw(m.entry[0][1], m.entry[1][1]);
+			}
 			if (camera->IsInThirdPerson() && a_player)
 			{
 				if (auto* tps = static_cast<RE::ThirdPersonState*>(camera->currentState.get()))
 				{
 					y.thirdPerson = (a_player->GetAngleZ() + (tps->freeRotationEnabled ? tps->freeRotation.x : 0.0F)) * k;
+					y.tpsCurrentYaw = tps->currentYaw * k;
+					y.tpsTargetYaw = tps->targetYaw * k;
+					y.tpsFreeX = tps->freeRotation.x * k;
 				}
 			}
 		}
 		return y;
+	}
+
+	std::string YawText(const YawSources& a_y)
+	{
+		return std::format("NiCamera {:.1f} (used) | worldToCam rows {:.1f} {:.1f} {:.1f} | cameraRoot cols {:.1f} {:.1f} | heading+freeRotation {:.1f} | "
+			"TPS currentYaw {:.1f} targetYaw {:.1f} freeRotation.x {:.1f} | RUNTIME_DATA2 {:.1f} | body {:.1f}",
+			a_y.niCamera, a_y.w2c[0], a_y.w2c[1], a_y.w2c[2], a_y.root0, a_y.root1, a_y.thirdPerson, a_y.tpsCurrentYaw, a_y.tpsTargetYaw, a_y.tpsFreeX,
+			a_y.runtimeData2, a_y.body);
+	}
+
+	// A debug trace of the yaw sources over time (render thread, every frame): one line whenever any source has moved more
+	// than 3 degrees since the last line, at most four a second - so a camera turn shows up whether or not a hit lands.
+	void TraceYaws(RE::PlayerCharacter* a_player)
+	{
+		if (!spdlog::default_logger()->should_log(spdlog::level::debug)) { return; }
+		static YawSources s_last;
+		static auto s_at = std::chrono::steady_clock::time_point{};
+		const auto now = std::chrono::steady_clock::now();
+		if (now - s_at < std::chrono::milliseconds(250)) { return; }
+		const auto y = ReadYaws(a_player);
+		const float a[] = { y.niCamera, y.w2c[0], y.w2c[1], y.w2c[2], y.root0, y.root1, y.thirdPerson, y.tpsCurrentYaw, y.tpsTargetYaw, y.tpsFreeX, y.runtimeData2, y.body };
+		const float b[] = { s_last.niCamera, s_last.w2c[0], s_last.w2c[1], s_last.w2c[2], s_last.root0, s_last.root1, s_last.thirdPerson, s_last.tpsCurrentYaw,
+			s_last.tpsTargetYaw, s_last.tpsFreeX, s_last.runtimeData2, s_last.body };
+		bool moved = false;
+		for (std::size_t i = 0; i < std::size(a); ++i)
+		{
+			if (std::isnan(a[i]) != std::isnan(b[i]) || (!std::isnan(a[i]) && std::abs(Wrap180(a[i] - b[i])) > 3.0F)) { moved = true; break; }
+		}
+		if (!moved) { return; }
+		s_last = y;
+		s_at = now;
+		logger::debug("camera yaw sources moved: {}", YawText(y));
 	}
 
 	// The camera's yaw in degrees (Dragon's Eye Minimap's PlayerHeading: the way the camera looks, not the body).
@@ -376,6 +423,7 @@ namespace
 		if (!g_api.getIO || !g_api.background || !g_api.addImageQuad) { return; }
 		auto* io = g_api.getIO();
 		if (!io || io->DisplaySize.x <= 0.0F || io->DisplaySize.y <= 0.0F) { return; }   // minimised: no size to place on
+		TraceYaws(RE::PlayerCharacter::GetSingleton());
 
 		const float dur = std::max(settings::duration.load(), 0.2F);
 		const float dt = std::clamp(io->DeltaTime, 0.0F, 0.1F);
